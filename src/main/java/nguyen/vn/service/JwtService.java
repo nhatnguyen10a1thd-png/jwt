@@ -1,18 +1,18 @@
 package nguyen.vn.service;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
+import com.nimbusds.jose.*;
+import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jose.crypto.MACVerifier;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-import javax.crypto.SecretKey;
+import java.text.ParseException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
 
 @Service
 public class JwtService {
@@ -23,12 +23,15 @@ public class JwtService {
     private long jwtExpiration;
 
     public String extractUsername(String token) {
-        return extractClaim(token, Claims::getSubject);
+        return extractClaim(token, "sub");
     }
 
-    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        final Claims claims = extractAllClaims(token);
-        return claimsResolver.apply(claims);
+    /**
+     * Trích xuất một claim cụ thể từ token.
+     */
+    public Object extractClaim(String token, String claimName) {
+        JWTClaimsSet claims = extractAllClaims(token);
+        return claims.getClaim(claimName);
     }
 
     public String generateToken(UserDetails userDetails) {
@@ -48,14 +51,35 @@ public class JwtService {
             UserDetails userDetails,
             long expiration
     ) {
-        return Jwts.builder()
-                .claims(extraClaims)
-                .subject(userDetails.getUsername())
-                .issuedAt(new Date(System.currentTimeMillis()))
-                // the token will be expired in 30 hours
-                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 30))
-                .signWith(getSignInKey(), Jwts.SIG.HS256)
-                .compact();
+        try {
+            // Xây dựng JWT Claims
+            JWTClaimsSet.Builder claimsBuilder = new JWTClaimsSet.Builder()
+                    .subject(userDetails.getUsername())
+                    .issueTime(new Date(System.currentTimeMillis()))
+                    // the token will be expired in 30 hours
+                    .expirationTime(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 30));
+
+            // Thêm extra claims
+            for (Map.Entry<String, Object> entry : extraClaims.entrySet()) {
+                claimsBuilder.claim(entry.getKey(), entry.getValue());
+            }
+
+            JWTClaimsSet claimsSet = claimsBuilder.build();
+
+            // Tạo JWS Header với thuật toán HS256
+            JWSHeader header = new JWSHeader(JWSAlgorithm.HS256);
+
+            // Tạo Signed JWT
+            SignedJWT signedJWT = new SignedJWT(header, claimsSet);
+
+            // Ký token bằng secret key
+            JWSSigner signer = new MACSigner(getSecretKeyBytes());
+            signedJWT.sign(signer);
+
+            return signedJWT.serialize();
+        } catch (JOSEException e) {
+            throw new RuntimeException("Lỗi khi tạo JWT token", e);
+        }
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
@@ -64,24 +88,51 @@ public class JwtService {
     }
 
     private boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
+        Date expiration = extractExpiration(token);
+        return expiration.before(new Date());
     }
 
     private Date extractExpiration(String token) {
-        return extractClaim(token, Claims::getExpiration);
+        JWTClaimsSet claims = extractAllClaims(token);
+        return claims.getExpirationTime();
     }
 
-    private Claims extractAllClaims(String token) {
-        return Jwts
-                .parser()
-                .verifyWith(getSignInKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+    /**
+     * Parse và xác thực chữ ký của token, trả về toàn bộ claims.
+     */
+    private JWTClaimsSet extractAllClaims(String token) {
+        try {
+            SignedJWT signedJWT = SignedJWT.parse(token);
+
+            // Xác thực chữ ký
+            JWSVerifier verifier = new MACVerifier(getSecretKeyBytes());
+            if (!signedJWT.verify(verifier)) {
+                throw new RuntimeException("Chữ ký JWT không hợp lệ");
+            }
+
+            return signedJWT.getJWTClaimsSet();
+        } catch (ParseException | JOSEException e) {
+            throw new RuntimeException("Lỗi khi parse JWT token", e);
+        }
     }
 
-    private SecretKey getSignInKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
-        return Keys.hmacShaKeyFor(keyBytes);
+    /**
+     * Decode secret key từ Base64 (hex string) thành byte array.
+     * Nimbus yêu cầu key tối thiểu 256 bit (32 bytes) cho HS256.
+     */
+    private byte[] getSecretKeyBytes() {
+        // Secret key đang lưu dạng hex string trong application.properties
+        // Chuyển hex string thành byte array
+        return hexStringToByteArray(secretKey);
+    }
+
+    private static byte[] hexStringToByteArray(String hex) {
+        int len = hex.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(hex.charAt(i), 16) << 4)
+                    + Character.digit(hex.charAt(i + 1), 16));
+        }
+        return data;
     }
 }
