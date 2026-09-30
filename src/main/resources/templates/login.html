@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Đăng nhập — SecureAuth</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<!-- Background -->
+<div class="bg-pattern">
+    <div class="bg-line"></div>
+    <div class="bg-line"></div>
+    <div class="bg-line"></div>
+</div>
+
+<!-- Navbar -->
+<nav class="navbar">
+    <a href="/" class="brand">
+        <div class="brand-mark">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/>
+            </svg>
+        </div>
+        <div class="brand-text">Secure<span>Auth</span></div>
+    </a>
+</nav>
+
+<!-- Login -->
+<div class="page-wrapper">
+    <div class="card login-split">
+
+        <!-- Left Visual Panel -->
+        <div class="login-visual">
+            <div class="visual-content">
+                <h2>Xác thực với công nghệ JWT</h2>
+            </div>
+            <div class="visual-footer">
+                <div class="shield">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"/>
+                    </svg>
+                </div>
+                <span>Hà Nguyễn Nhật Nguyên-24110288 </span>
+            </div>
+        </div>
+
+        <!-- Right Form -->
+        <div class="login-form-side">
+            <div class="form-header">
+                <h1>Đăng nhập</h1>
+                <p>Nhập thông tin tài khoản để tiếp tục</p>
+            </div>
+
+            <div id="alertMessage" class="alert-msg"></div>
+
+            <form id="loginForm" action="" method="post">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <div class="input-wrapper">
+                        <input type="email" id="email" name="email" class="form-input" placeholder="you@company.com" required>
+                        <span class="icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"/>
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Mật khẩu</label>
+                    <div class="input-wrapper">
+                        <input type="password" id="password" name="password" class="form-input" placeholder="••••••••" required autocomplete="on">
+                        <span class="icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z"/>
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+
+                <button id="login" type="button" class="btn-gold">
+                    <span class="gold-dot"></span>
+                    <span id="loginText">Đăng nhập</span>
+                    <div id="loginSpinner" class="spinner"></div>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="/js/mainjs.js"></script>
+</body>
+</html>
